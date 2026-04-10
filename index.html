@@ -33,9 +33,9 @@
             padding: 8px 20px;
             border-radius: 50px;
             min-height: 28px;
+            transition: background 0.3s;
         }
 
-        /* 響應式棋盤容器 */
         .board-container {
             position: relative;
             width: 92vw; 
@@ -45,7 +45,7 @@
             background-color: var(--board-color);
             border: 6px solid #d35400; 
             border-radius: 10px;
-            padding: 5%; /* 使用百分比內邊距 */
+            padding: 5%;
             box-sizing: border-box;
         }
 
@@ -61,10 +61,9 @@
             z-index: 100; 
         }
 
-        /* 棋子：隨棋盤大小自動縮放 */
         .stone {
             position: absolute; 
-            width: 9%;  /* 9x9 建議寬度 */
+            width: 9%;
             height: 9%; 
             border-radius: 50%; 
             transform: translate(-50%, -50%);
@@ -72,16 +71,15 @@
             display: flex; 
             justify-content: center; 
             align-items: center;
-            font-size: 4vw; /* 字體也隨螢幕寬度縮放 */
+            font-size: 4vw;
             pointer-events: none;
+            transition: transform 0.2s ease;
         }
-        /* 電腦版字體修正 */
         @media (min-width: 500px) { .stone { font-size: 20px; } }
 
         .stone.black { background: #000; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .stone.white { background: #fff; color: black; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-        /* 氣的光環 (Aura) */
         .aura {
             position: absolute; 
             width: 14%; 
@@ -95,7 +93,6 @@
         .aura-black { background: var(--black-aura); box-shadow: 0 0 10px var(--black-aura); }
         .aura-white { background: var(--white-aura); box-shadow: 0 0 10px var(--white-aura); }
 
-        /* 咬痕 (缺口) */
         .bite {
             position: absolute; 
             background-color: var(--board-color);
@@ -107,7 +104,6 @@
             transform: translate(-50%, -50%);
         }
 
-        /* 禁著點震動 */
         .shake { animation: shake-anim 0.3s ease-in-out; }
         @keyframes shake-anim {
             0%, 100% { transform: translateX(0); }
@@ -121,7 +117,14 @@
             50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.1); }
         }
 
-        button { margin-top: 15px; padding: 8px 25px; border-radius: 20px; border: none; background: #e67e22; color: white; font-weight: bold; cursor: pointer; }
+        .captured { animation: pop-anim 0.3s ease-out forwards; }
+        @keyframes pop-anim {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+        }
+
+        button { margin-top: 15px; padding: 8px 25px; border-radius: 20px; border: none; background: #e67e22; color: white; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #d35400; }
     </style>
 </head>
 <body>
@@ -130,10 +133,10 @@
     <div class="board-container" id="container">
         <div class="board-inner" id="board"></div>
     </div>
-    <button onclick="resetGame()">重新開始</button>
+    <button onclick="resetGame()">🔄 重新開始</button>
 
     <script>
-        const size = 9; // 已修改為 9x9
+        const size = 9;
         const boardEl = document.getElementById('board');
         const containerEl = document.getElementById('container');
         const statusEl = document.getElementById('status');
@@ -144,8 +147,8 @@
             boardEl.innerHTML = '';
             for (let i = 0; i < size; i++) {
                 const p = (i / (size - 1)) * 100;
-                addLine(0, p, 100, 1.5); // 橫線
-                addLine(p, 0, 1.5, 100); // 直線
+                addLine(0, p, 100, 1.5);
+                addLine(p, 0, 1.5, 100);
             }
             for (let r = 0; r < size; r++) {
                 for (let c = 0; c < size; c++) {
@@ -166,39 +169,99 @@
             boardEl.appendChild(l);
         }
 
-        function getLibs(r, c, color, visited = new Set()) {
-            const key = `${r},${c}`;
-            if (visited.has(key)) return new Set();
-            visited.add(key);
-            let libs = new Set();
-            [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
-                let nr=r+dr, nc=c+dc;
-                if(nr>=0&&nr<size&&nc>=0&&nc<size) {
-                    if(!boardState[nr][nc]) libs.add(`${nr},${nc}`);
-                    else if(boardState[nr][nc]===color) getLibs(nr,nc,color,visited).forEach(l=>libs.add(l));
-                }
-            });
-            return libs;
+        // 🔧 新增：找出相連的同色棋群 (BFS)
+        function getConnectedGroup(startR, startC, color) {
+            const group = [];
+            const visited = new Set();
+            const queue = [[startR, startC]];
+            visited.add(`${startR},${startC}`);
+
+            while (queue.length > 0) {
+                const [r, c] = queue.shift();
+                group.push([r, c]);
+
+                [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
+                    const nr = r + dr, nc = c + dc;
+                    const key = `${nr},${nc}`;
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size 
+                        && !visited.has(key) && boardState[nr][nc] === color) {
+                        visited.add(key);
+                        queue.push([nr, nc]);
+                    }
+                });
+            }
+            return group;
         }
 
+        // 🔧 新增：計算「整個棋群」的氣數（用 Set 去重）
+        function countGroupLiberties(group) {
+            const libs = new Set();
+            group.forEach(([r, c]) => {
+                [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size && !boardState[nr][nc]) {
+                        libs.add(`${nr},${nc}`);
+                    }
+                });
+            });
+            return libs.size;
+        }
+
+        // 🔧 修正：正確的提子邏輯（先蒐集棋群→算氣→一次性移除）
         function checkCapture(target) {
-            for(let r=0; r<size; r++) {
-                for(let c=0; c<size; c++) {
-                    if(boardState[r][c]===target && getLibs(r,c,target).size===0) boardState[r][c]=null;
+            const visited = new Set();
+            const toRemove = [];
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (boardState[r][c] === target) {
+                        const key = `${r},${c}`;
+                        if (!visited.has(key)) {
+                            const group = getConnectedGroup(r, c, target);
+                            group.forEach(([gr, gc]) => visited.add(`${gr},${gc}`));
+                            if (countGroupLiberties(group) === 0) {
+                                toRemove.push(...group);
+                            }
+                        }
+                    }
                 }
             }
+
+            // ✅ 一次性移除，避免計算污染
+            toRemove.forEach(([r, c]) => boardState[r][c] = null);
+            return toRemove;
         }
 
+        // 🔧 修正：禁著點判斷也要用棋群邏輯
         function isIllegal(r, c, color) {
             boardState[r][c] = color;
             const enemy = (color === 'black' ? 'white' : 'black');
+            
+            // 檢查「能否提掉敵方棋群」
             let canCapture = false;
-            for(let er=0; er<size; er++) {
-                for(let ec=0; ec<size; ec++) {
-                    if(boardState[er][ec]===enemy && getLibs(er,ec,enemy).size===0) canCapture = true;
+            const visited = new Set();
+            
+            for (let er = 0; er < size; er++) {
+                for (let ec = 0; ec < size; ec++) {
+                    if (boardState[er][ec] === enemy) {
+                        const key = `${er},${ec}`;
+                        if (!visited.has(key)) {
+                            const group = getConnectedGroup(er, ec, enemy);
+                            group.forEach(([gr, gc]) => visited.add(`${gr},${gc}`));
+                            if (countGroupLiberties(group) === 0) {
+                                canCapture = true;
+                                break;
+                            }
+                        }
+                    }
                 }
+                if (canCapture) break;
             }
-            const myLibs = getLibs(r, c, color).size;
+            
+            // 檢查「自己落子後是否無氣」
+            const myGroup = getConnectedGroup(r, c, color);
+            const myLibs = countGroupLiberties(myGroup);
+            
             boardState[r][c] = null;
             return (myLibs === 0 && !canCapture);
         }
@@ -212,17 +275,23 @@
                 setTimeout(() => updateStatus(), 1200);
                 return;
             }
+            
             boardState[r][c] = currentPlayer;
-            checkCapture(currentPlayer === 'black' ? 'white' : 'black');
+            const captured = checkCapture(currentPlayer === 'black' ? 'white' : 'black');
+            
+            // 切換玩家
             currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
-            render();
+            
+            // 渲染時傳入被提子的位置，播放動畫
+            render(captured);
         }
 
         function updateStatus() {
             statusEl.innerText = currentPlayer==='black'?'😊 輪到黑棋怪獸':'😎 輪到白棋怪獸';
         }
 
-        function render() {
+        // 🔧 優化：render 支援提子動畫
+        function render(captured = []) {
             document.querySelectorAll('.stone, .aura, .bite').forEach(e => e.remove());
             updateStatus();
             const step = 100 / (size - 1);
@@ -232,7 +301,7 @@
                     if(boardState[r][c]) {
                         const color = boardState[r][c];
                         const x = (c/(size-1)*100), y = (r/(size-1)*100);
-                        const libSize = getLibs(r, c, color).size;
+                        const libSize = countGroupLiberties(getConnectedGroup(r, c, color));
 
                         const aura = document.createElement('div');
                         aura.className = `aura aura-${color}`;
@@ -261,6 +330,16 @@
                     }
                 }
             }
+
+            // 🎬 播放提子動畫
+            captured.forEach(([r, c]) => {
+                const x = (c/(size-1)*100), y = (r/(size-1)*100);
+                const stone = document.createElement('div');
+                stone.className = `stone ${boardState[r][c] || 'black'} captured`;
+                stone.style.left = x+'%'; stone.style.top = y+'%';
+                stone.innerHTML = boardState[r][c]==='black'?'😈':'😇';
+                boardEl.appendChild(stone);
+            });
         }
 
         function resetGame() {
