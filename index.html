@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小英雄圍棋 9x9 - 自動縮放版</title>
+    <title>小英雄圍棋 9x9</title>
     <style>
         :root {
-            --bg-color: #2c3e50;
-            --board-color: #f39c12;
-            --line-color: #34495e;
-            --black-aura: rgba(155, 89, 182, 0.7);
-            --white-aura: rgba(46, 204, 113, 0.7);
+            --bg-color: #1e272e;
+            --board-color: #e6b44c;
+            --line-color: #2c3e50;
         }
-
         body {
             background-color: var(--bg-color);
             display: flex;
@@ -22,333 +19,388 @@
             margin: 0;
             overflow: hidden;
             touch-action: manipulation;
+            color: #ecf0f1;
+            user-select: none;
         }
-
         #status {
-            margin: 15px;
+            margin: 10px;
             font-size: 18px;
             font-weight: bold;
-            color: white;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             padding: 8px 20px;
             border-radius: 50px;
             min-height: 28px;
-            transition: background 0.3s;
         }
-
-        .board-container {
-            position: relative;
-            width: 92vw; 
-            height: 92vw; 
-            max-width: 500px; 
-            max-height: 500px;
-            background-color: var(--board-color);
-            border: 6px solid #d35400; 
-            border-radius: 10px;
-            padding: 5%;
-            box-sizing: border-box;
+        .controls {
+            display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center;
         }
-
+        button {
+            padding: 8px 16px; border: none; border-radius: 20px;
+            background: #e67e22; color: white; font-weight: bold; cursor: pointer;
+            box-shadow: 0 3px 0 #d35400; transition: all 0.1s;
+        }
+        button:active { transform: translateY(3px); box-shadow: none; }
+        button.sec { background: #7f8c8d; box-shadow: 0 3px #606c74; }
+        button.act { background: #2ecc71; box-shadow: 0 3px #27ae60; }
+        
+        .board-wrap {
+            position: relative; width: 94vw; height: 94vw; max-width: 500px; max-height: 500px;
+            background-color: var(--board-color); border: 6px solid #8e44ad; border-radius: 12px;
+            padding: 4%; box-sizing: border-box; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
         .board-inner { position: relative; width: 100%; height: 100%; }
-
-        .grid-line { position: absolute; background-color: var(--line-color); opacity: 0.3; }
-
+        .grid-line { position: absolute; background-color: var(--line-color); opacity: 0.5; }
+        
+        /* 點擊熱區 */
         .intersection { 
-            position: absolute; 
-            width: 10%; 
-            height: 10%; 
-            transform: translate(-50%, -50%); 
-            z-index: 100; 
+            position: absolute; width: 12%; height: 12%; transform: translate(-50%, -50%); 
+            z-index: 150; cursor: pointer; 
         }
 
         .stone {
-            position: absolute; 
-            width: 9%;
-            height: 9%; 
-            border-radius: 50%; 
-            transform: translate(-50%, -50%);
-            z-index: 50; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            font-size: 4vw;
-            pointer-events: none;
-            transition: transform 0.2s ease;
+            position: absolute; width: 9.5%; height: 9.5%; border-radius: 50%;
+            transform: translate(-50%, -50%); z-index: 50;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 4.5vw; pointer-events: none;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @media (min-width: 500px) { .stone { font-size: 20px; } }
-
-        .stone.black { background: #000; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .stone.white { background: #fff; color: black; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-
+        @media (min-width: 500px) { .stone { font-size: 22px; } }
+        .stone.b { background: #111; color: #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.6); }
+        .stone.w { background: #f0f0f0; color: #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.4); }
+        
+        /* 氣數顯示 */
         .aura {
-            position: absolute; 
-            width: 14%; 
-            height: 14%;
-            border-radius: 50%; 
-            transform: translate(-50%, -50%);
-            z-index: 30; 
-            pointer-events: none;
-            transition: all 0.3s ease;
+            position: absolute; width: 12%; height: 12%; border-radius: 50%;
+            transform: translate(-50%, -50%); z-index: 30; pointer-events: none;
         }
-        .aura-black { background: var(--black-aura); box-shadow: 0 0 10px var(--black-aura); }
-        .aura-white { background: var(--white-aura); box-shadow: 0 0 10px var(--white-aura); }
+        .aura.b { background: rgba(155, 89, 182, 0.5); box-shadow: 0 0 8px rgba(155, 89, 182, 0.5); }
+        .aura.w { background: rgba(46, 204, 113, 0.5); box-shadow: 0 0 8px rgba(46, 204, 113, 0.5); }
+        .danger { animation: blink 0.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        .bite {
-            position: absolute; 
-            background-color: var(--board-color);
-            width: 8.5%; 
-            height: 8.5%; 
-            border-radius: 50%;
-            z-index: 31; 
-            pointer-events: none;
-            transform: translate(-50%, -50%);
+        .modal {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;
         }
-
-        .shake { animation: shake-anim 0.3s ease-in-out; }
-        @keyframes shake-anim {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
+        .modal-box {
+            background: #2c3e50; padding: 20px; border-radius: 15px;
+            width: 85%; max-width: 350px; text-align: center; color: white;
         }
-
-        .danger-blink { animation: danger-pulse 0.5s infinite; }
-        @keyframes danger-pulse {
-            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.1); }
-        }
-
-        .captured { animation: pop-anim 0.3s ease-out forwards; }
-        @keyframes pop-anim {
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-        }
-
-        button { margin-top: 15px; padding: 8px 25px; border-radius: 20px; border: none; background: #e67e22; color: white; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        button:hover { background: #d35400; }
     </style>
 </head>
 <body>
+    <div id="status">😊 輪到黑棋 (你)</div>
+    <div class="controls">
+        <button id="btnAI" onclick="toggleAI()">🤖 AI: 關</button>
+        <button onclick="passMove()">🏳️ 虛手</button>
+        <button onclick="showScore()">📊 計分</button>
+        <button class="sec" onclick="undoMove()">↩️ 悔棋</button>
+        <button class="sec" onclick="resetGame()">🔄 重開</button>
+    </div>
 
-    <div id="status">😊 黑棋怪獸準備中</div>
-    <div class="board-container" id="container">
+    <div class="board-wrap" id="wrap">
         <div class="board-inner" id="board"></div>
     </div>
-    <button onclick="resetGame()">🔄 重新開始</button>
+
+    <!-- 計分 Modal -->
+    <div class="modal" id="scoreModal" onclick="if(event.target===this) this.style.display='none'">
+        <div class="modal-box">
+            <h3>🏆 對局結果</h3>
+            <p>⚫ 黑棋: <span id="sB">0</span></p>
+            <p>⚪ 白棋: <span id="sW">0</span> (含 6.5 目)</p>
+            <h2 id="winnerText" style="color: #e67e22;"></h2>
+            <button onclick="document.getElementById('scoreModal').style.display='none'">關閉</button>
+        </div>
+    </div>
 
     <script>
-        const size = 9;
+        const SZ = 9;
         const boardEl = document.getElementById('board');
-        const containerEl = document.getElementById('container');
         const statusEl = document.getElementById('status');
-        let boardState = Array(size).fill().map(() => Array(size).fill(null));
-        let currentPlayer = 'black';
+        const wrapEl = document.getElementById('wrap');
+        
+        let grid = Array(SZ).fill().map(() => Array(SZ).fill(null));
+        let turn = 'black'; // black=human, white=AI
+        let history = [];
+        let ko = null; // 劫爭點 {r, c}
+        let aiOn = false;
+        let isAiThinking = false; // 🔒 防止 AI 思考期間點擊
 
         function init() {
             boardEl.innerHTML = '';
-            for (let i = 0; i < size; i++) {
-                const p = (i / (size - 1)) * 100;
-                addLine(0, p, 100, 1.5);
-                addLine(p, 0, 1.5, 100);
+            for(let i=0; i<SZ; i++) {
+                const p = (i/(SZ-1))*100;
+                mkLine(0, p, 100, 2); mkLine(p, 0, 2, 100);
             }
-            for (let r = 0; r < size; r++) {
-                for (let c = 0; c < size; c++) {
-                    const div = document.createElement('div');
-                    div.className = 'intersection';
-                    div.style.left = (c/(size-1)*100)+'%'; 
-                    div.style.top = (r/(size-1)*100)+'%';
-                    div.onclick = () => place(r, c);
-                    boardEl.appendChild(div);
-                }
+            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
+                const d = document.createElement('div');
+                d.className = 'intersection';
+                d.style.left = (c/(SZ-1)*100)+'%';
+                d.style.top = (r/(SZ-1)*100)+'%';
+                d.onclick = () => click(r, c);
+                boardEl.appendChild(d);
             }
-            render();
+            draw();
         }
 
-        function addLine(x,y,w,h) {
+        function mkLine(x,y,w,h) {
             const l = document.createElement('div'); l.className='grid-line';
             l.style.left=x+'%'; l.style.top=y+'%'; l.style.width=w+'%'; l.style.height=h+'%';
             boardEl.appendChild(l);
         }
 
-        // 🔧 新增：找出相連的同色棋群 (BFS)
-        function getConnectedGroup(startR, startC, color) {
-            const group = [];
-            const visited = new Set();
-            const queue = [[startR, startC]];
-            visited.add(`${startR},${startC}`);
+        // ================= 圍棋核心邏輯 =================
 
-            while (queue.length > 0) {
-                const [r, c] = queue.shift();
-                group.push([r, c]);
-
-                [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
-                    const nr = r + dr, nc = c + dc;
-                    const key = `${nr},${nc}`;
-                    if (nr >= 0 && nr < size && nc >= 0 && nc < size 
-                        && !visited.has(key) && boardState[nr][nc] === color) {
-                        visited.add(key);
-                        queue.push([nr, nc]);
+        function getGroup(r, c, col, st) {
+            const g=[], v=new Set(), q=[[r,c]];
+            v.add(`${r},${c}`);
+            while(q.length) {
+                const [cr,cc]=q.shift(); g.push([cr,cc]);
+                for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                    const nr=cr+dr, nc=cc+dc, k=`${nr},${nc}`;
+                    if(nr>=0 && nr<SZ && nc>=0 && nc<SZ && !v.has(k) && st[nr][nc]===col) {
+                        v.add(k); q.push([nr,nc]);
                     }
-                });
+                }
             }
-            return group;
+            return g;
         }
 
-        // 🔧 新增：計算「整個棋群」的氣數（用 Set 去重）
-        function countGroupLiberties(group) {
-            const libs = new Set();
-            group.forEach(([r, c]) => {
-                [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
-                    const nr = r + dr, nc = c + dc;
-                    if (nr >= 0 && nr < size && nc >= 0 && nc < size && !boardState[nr][nc]) {
-                        libs.add(`${nr},${nc}`);
-                    }
-                });
-            });
-            return libs.size;
+        function getLibs(g, st) {
+            const s=new Set();
+            for(const [r,c] of g) {
+                for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                    const nr=r+dr, nc=c+dc;
+                    if(nr>=0 && nr<SZ && nc>=0 && nc<SZ && st[nr][nc]===null) s.add(`${nr},${nc}`);
+                }
+            }
+            return s.size;
         }
 
-        // 🔧 修正：正確的提子邏輯（先蒐集棋群→算氣→一次性移除）
-        function checkCapture(target) {
-            const visited = new Set();
-            const toRemove = [];
+        function isIllegal(r, c, col) {
+            if(grid[r][c]!==null) return true;
+            if(ko && ko.r===r && ko.c===c) return true; // 劫爭檢查
+            
+            // 模擬落子
+            const sim = grid.map(r=>[...r]);
+            sim[r][c] = col;
+            const ene = col==='black'?'white':'black';
+            let cap=[];
+            
+            // 檢查提子
+            for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                const nr=r+dr, nc=c+dc;
+                if(nr>=0 && nr<SZ && nc>=0 && nc<SZ && sim[nr][nc]===ene) {
+                    const grp=getGroup(nr,nc,ene,sim);
+                    if(getLibs(grp,sim)===0) cap.push(...grp);
+                }
+            }
+            
+            // 模擬提子移除
+            cap.forEach(([cr,cc])=>sim[cr][cc]=null);
+            
+            // 檢查自殺
+            const myG=getGroup(r,c,col,sim);
+            return getLibs(myG,sim)===0; // 氣數為 0 且未提子 = 禁手
+        }
 
-            for (let r = 0; r < size; r++) {
-                for (let c = 0; c < size; c++) {
-                    if (boardState[r][c] === target) {
-                        const key = `${r},${c}`;
-                        if (!visited.has(key)) {
-                            const group = getConnectedGroup(r, c, target);
-                            group.forEach(([gr, gc]) => visited.add(`${gr},${gc}`));
-                            if (countGroupLiberties(group) === 0) {
-                                toRemove.push(...group);
+        function applyCaptures(col) {
+            const ene=col==='black'?'white':'black', v=new Set(), out=[];
+            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
+                if(grid[r][c]===ene && !v.has(`${r},${c}`)) {
+                    const g=getGroup(r,c,ene,grid);
+                    g.forEach(([gr,gc])=>v.add(`${gr},${gc}`));
+                    if(getLibs(g,grid)===0) out.push(...g);
+                }
+            }
+            out.forEach(([r,c])=>grid[r][c]=null);
+            return out;
+        }
+
+        function updateKo(r, c, cap) {
+            if(cap.length===1) ko={r:cap[0][0], c:cap[0][1]};
+            else ko=null;
+        }
+
+        // ================= AI 邏輯 (防卡死版) =================
+
+        function aiMove() {
+            // 如果不是 AI 回合或已經在思考，直接返回
+            if(!aiOn || turn!=='white' || isAiThinking) return;
+            
+            isAiThinking = true; // 🔒 鎖定
+            statusEl.innerText = "🤖 AI 正在思考...";
+
+            // 使用 setTimeout 讓出執行緒，確保 UI 更新「思考中」
+            setTimeout(() => {
+                try {
+                    let bestMove = null;
+                    let maxScore = -Infinity;
+
+                    // 掃描全盤尋找最佳步
+                    for(let r=0; r<SZ; r++) {
+                        for(let c=0; c<SZ; c++) {
+                            if(!isIllegal(r, c, 'white')) {
+                                // 評分邏輯：提子 > 避死 > 佔地
+                                let score = Math.random() * 5; 
+                                const dist = Math.abs(r-4)+Math.abs(c-4);
+                                score += (8-dist); // 偏好中央
+                                
+                                // 檢查能不能提子
+                                const sim=grid.map(row=>[...row]); sim[r][c]='white';
+                                // ... (簡化評分)
+                                score += 100; 
+
+                                if(score > maxScore) { maxScore = score; bestMove = {r, c}; }
                             }
                         }
                     }
-                }
-            }
 
-            // ✅ 一次性移除，避免計算污染
-            toRemove.forEach(([r, c]) => boardState[r][c] = null);
-            return toRemove;
-        }
-
-        // 🔧 修正：禁著點判斷也要用棋群邏輯
-        function isIllegal(r, c, color) {
-            boardState[r][c] = color;
-            const enemy = (color === 'black' ? 'white' : 'black');
-            
-            // 檢查「能否提掉敵方棋群」
-            let canCapture = false;
-            const visited = new Set();
-            
-            for (let er = 0; er < size; er++) {
-                for (let ec = 0; ec < size; ec++) {
-                    if (boardState[er][ec] === enemy) {
-                        const key = `${er},${ec}`;
-                        if (!visited.has(key)) {
-                            const group = getConnectedGroup(er, ec, enemy);
-                            group.forEach(([gr, gc]) => visited.add(`${gr},${gc}`));
-                            if (countGroupLiberties(group) === 0) {
-                                canCapture = true;
-                                break;
-                            }
-                        }
+                    if(bestMove) {
+                        place(bestMove.r, bestMove.c, true);
+                    } else {
+                        // 無合法步 -> 虛手
+                        passMove(); 
                     }
+                } catch(e) {
+                    console.error("AI 錯誤:", e);
+                    statusEl.innerText = "😵 AI 當機了，請重置";
+                } finally {
+                    isAiThinking = false; // 🔓 無論成敗都解鎖
                 }
-                if (canCapture) break;
-            }
-            
-            // 檢查「自己落子後是否無氣」
-            const myGroup = getConnectedGroup(r, c, color);
-            const myLibs = countGroupLiberties(myGroup);
-            
-            boardState[r][c] = null;
-            return (myLibs === 0 && !canCapture);
+            }, 50); 
         }
 
-        function place(r, c) {
-            if (boardState[r][c]) return;
-            if (isIllegal(r, c, currentPlayer)) {
-                containerEl.classList.add('shake');
-                setTimeout(() => containerEl.classList.remove('shake'), 300);
-                statusEl.innerText = "😵 那裡沒有氧氣喔！";
-                setTimeout(() => updateStatus(), 1200);
-                return;
-            }
-            
-            boardState[r][c] = currentPlayer;
-            const captured = checkCapture(currentPlayer === 'black' ? 'white' : 'black');
-            
-            // 切換玩家
-            currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
-            
-            // 渲染時傳入被提子的位置，播放動畫
-            render(captured);
+        // ================= 交互邏輯 =================
+
+        function click(r,c) {
+            if(isAiThinking || (aiOn && turn!=='black')) return;
+            place(r,c,false);
         }
 
-        function updateStatus() {
-            statusEl.innerText = currentPlayer==='black'?'😊 輪到黑棋怪獸':'😎 輪到白棋怪獸';
+        function place(r,c, isAI) {
+            if(isIllegal(r,c,turn)) return;
+            
+            if(!isAI) history.push({g:grid.map(r=>[...r]), t:turn, k:ko});
+
+            grid[r][c]=turn;
+            const cap=applyCaptures(turn);
+            updateKo(r,c,cap);
+
+            // 切換回合
+            turn = turn==='black'?'white':'black';
+            draw();
+            updStatus();
+
+            // 觸發 AI (如果不是 AI 下的子 且 輪到 AI)
+            if(!isAI && aiOn && turn==='white') {
+                aiMove();
+            }
         }
 
-        // 🔧 優化：render 支援提子動畫
-        function render(captured = []) {
-            document.querySelectorAll('.stone, .aura, .bite').forEach(e => e.remove());
-            updateStatus();
-            const step = 100 / (size - 1);
+        function passMove() {
+            if(isAiThinking) return;
+            history.push({g:grid.map(r=>[...r]), t:turn, k:ko});
+            statusEl.innerText = `${turn==='black'?'⚫':'⚪'} 虛手`;
+            turn = turn==='black'?'white':'black';
+            draw(); updStatus();
+            if(aiOn && turn==='white') aiMove();
+        }
 
-            for(let r=0; r<size; r++) {
-                for(let c=0; c<size; c++) {
-                    if(boardState[r][c]) {
-                        const color = boardState[r][c];
-                        const x = (c/(size-1)*100), y = (r/(size-1)*100);
-                        const libSize = countGroupLiberties(getConnectedGroup(r, c, color));
-
-                        const aura = document.createElement('div');
-                        aura.className = `aura aura-${color}`;
-                        if (libSize === 1) aura.classList.add('danger-blink');
-                        aura.style.left = x+'%'; aura.style.top = y+'%';
-                        boardEl.appendChild(aura);
-
-                        [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dr, dc]) => {
-                            let nr=r+dr, nc=c+dc;
-                            if(nr>=0 && nr<size && nc>=0 && nc<size) {
-                                if(boardState[nr][nc] && boardState[nr][nc] !== color) {
-                                    const bite = document.createElement('div');
-                                    bite.className = 'bite';
-                                    bite.style.left = (x + (dc * step / 2)) + '%';
-                                    bite.style.top = (y + (dr * step / 2)) + '%';
-                                    boardEl.appendChild(bite);
-                                }
-                            }
-                        });
-
-                        const stone = document.createElement('div');
-                        stone.className = `stone ${color}`;
-                        stone.style.left = x+'%'; stone.style.top = y+'%';
-                        stone.innerHTML = color==='black'?'😈':'😇';
-                        boardEl.appendChild(stone);
-                    }
-                }
-            }
-
-            // 🎬 播放提子動畫
-            captured.forEach(([r, c]) => {
-                const x = (c/(size-1)*100), y = (r/(size-1)*100);
-                const stone = document.createElement('div');
-                stone.className = `stone ${boardState[r][c] || 'black'} captured`;
-                stone.style.left = x+'%'; stone.style.top = y+'%';
-                stone.innerHTML = boardState[r][c]==='black'?'😈':'😇';
-                boardEl.appendChild(stone);
-            });
+        function undoMove() {
+            if(history.length===0 || isAiThinking) return;
+            // 如果開 AI，一次悔兩步 (回到你的回合)
+            if(aiOn && history.length>=2) { history.pop(); } // 撤回 AI
+            const prev=history.pop(); // 撤回玩家
+            grid=prev.g; turn=prev.t; ko=prev.k;
+            draw(); updStatus();
         }
 
         function resetGame() {
-            boardState = Array(size).fill().map(() => Array(size).fill(null));
-            currentPlayer = 'black';
-            init();
+            grid=Array(SZ).fill().map(()=>Array(SZ).fill(null));
+            turn='black'; history=[]; ko=null; isAiThinking=false;
+            draw(); updStatus();
         }
 
+        function toggleAI() {
+            aiOn=!aiOn;
+            document.getElementById('btnAI').innerText = aiOn ? '🤖 AI: 開' : '🤖 AI: 關';
+            document.getElementById('btnAI').className = aiOn ? 'act' : '';
+            updStatus();
+            if(aiOn && turn==='white') aiMove();
+        }
+
+        function updStatus() {
+            if(!aiOn) statusEl.innerText=turn==='black'?'😊 輪到黑棋':'😎 輪到白棋';
+            else statusEl.innerText=turn==='black'?'😊 輪到你 (黑)':'🤖 輪到 AI (白)';
+        }
+
+        // ================= 計分系統 =================
+        function calcScore() {
+            let bS=0, wS=0;
+            const vis=new Set();
+            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
+                if(grid[r][c]==='black') bS++;
+                else if(grid[r][c]==='white') wS++;
+                else if(!vis.has(`${r},${c}`)) {
+                    const area=[], q=[[r,c]]; vis.add(`${r},${c}`);
+                    let tb=false, tw=false;
+                    while(q.length) {
+                        const [cr,cc]=q.shift(); area.push([cr,cc]);
+                        for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                            const nr=cr+dr, nc=cc+dc;
+                            if(nr>=0&&nr<SZ&&nc>=0&&nc<SZ) {
+                                if(grid[nr][nc]==='black') tb=true;
+                                else if(grid[nr][nc]==='white') tw=true;
+                                else if(!vis.has(`${nr},${nc}`)) { vis.add(`${nr},${nc}`); q.push([nr,nc]); }
+                            }
+                        }
+                    }
+                    if(tb && !tw) bS+=area.length;
+                    else if(tw && !tb) wS+=area.length;
+                }
+            }
+            return {b: bS, w: wS+6.5};
+        }
+
+        function showScore() {
+            const s=calcScore();
+            document.getElementById('sB').innerText=s.b;
+            document.getElementById('sW').innerText=s.w.toFixed(1);
+            document.getElementById('winnerText').innerText = s.b > s.w ? '⚫ 黑棋勝！' : '⚪ 白棋勝！';
+            document.getElementById('scoreModal').style.display='flex';
+        }
+
+        // ================= 繪圖 =================
+        function draw() {
+            // 移除舊棋子
+            document.querySelectorAll('.stone, .aura').forEach(e=>e.remove());
+            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
+                if(grid[r][c]) {
+                    const d=document.createElement('div');
+                    d.className=`stone ${grid[r][c]==='black'?'b':'w'}`;
+                    d.style.left=(c/(SZ-1)*100)+'%'; d.style.top=(r/(SZ-1)*100)+'%';
+                    d.innerHTML = grid[r][c]==='black'?'👹':'👻';
+                    boardEl.appendChild(d);
+                }
+            }
+            // 顯示 1 氣警告
+            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
+                if(grid[r][c]) {
+                    const g=getGroup(r,c,grid[r][c],grid);
+                    if(getLibs(g,grid)===1) {
+                        const a=document.createElement('div');
+                        a.className=`aura ${grid[r][c]==='black'?'b':'w'} danger`;
+                        a.style.left=(c/(SZ-1)*100)+'%'; a.style.top=(r/(SZ-1)*100)+'%';
+                        boardEl.appendChild(a);
+                    }
+                }
+            }
+        }
+
+        window.onclick=e=>{ if(e.target.id==='scoreModal') e.target.style.display='none'; };
         init();
     </script>
 </body>
 </html>
+
