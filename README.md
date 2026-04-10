@@ -11,7 +11,7 @@
 
 ## 🕹️ 如何開始玩？
 
-1. 直接開啟你的 GitHub Pages 網址：https://inwayzheng-cell.github.io/kids-go/
+1. 直接開啟你的 GitHub Pages 網址：https://inwayzheng-cell.github.io/kids-go/DeanGo!.html
 2. **黑棋 (😈)** 先行，**白棋 (😇)** 隨後。
 3. 觀察光環：
    - **綠/紫光環**：安全，呼吸順暢。
