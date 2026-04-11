@@ -3,95 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小英雄圍棋 9x9</title>
+    <title>小英雄圍棋 9x9 - BOSS挑戰版</title>
     <style>
         :root {
-            --bg-color: #1e272e;
-            --board-color: #e6b44c;
-            --line-color: #2c3e50;
+            --bg: #1e272e; --board: #e6b44c; --line: #2c3e50;
+            --b-aura: rgba(155, 89, 182, 0.5); --w-aura: rgba(46, 204, 113, 0.5);
         }
         body {
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: "Microsoft JhengHei", sans-serif;
-            margin: 0;
-            overflow: hidden;
-            touch-action: manipulation;
-            color: #ecf0f1;
-            user-select: none;
+            background: var(--bg); display: flex; flex-direction: column; align-items: center;
+            font-family: "Microsoft JhengHei", system-ui, sans-serif; margin: 0;
+            overflow: hidden; touch-action: manipulation; color: #ecf0f1; user-select: none;
         }
-        #status {
-            margin: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            background: rgba(0,0,0,0.6);
-            padding: 8px 20px;
-            border-radius: 50px;
-            min-height: 28px;
-        }
-        .controls {
-            display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center;
-        }
-        button {
-            padding: 8px 16px; border: none; border-radius: 20px;
-            background: #e67e22; color: white; font-weight: bold; cursor: pointer;
-            box-shadow: 0 3px 0 #d35400; transition: all 0.1s;
-        }
+        #status { margin: 8px; font-size: 16px; font-weight: bold; background: rgba(0,0,0,0.6);
+            padding: 8px 18px; border-radius: 50px; min-height: 24px; text-align: center; }
+        .controls { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center; }
+        button { padding: 8px 14px; border: none; border-radius: 20px; background: #e67e22; color: white;
+            font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #d35400; transition: all 0.1s; }
         button:active { transform: translateY(3px); box-shadow: none; }
         button.sec { background: #7f8c8d; box-shadow: 0 3px #606c74; }
         button.act { background: #2ecc71; box-shadow: 0 3px #27ae60; }
         
-        .board-wrap {
-            position: relative; width: 94vw; height: 94vw; max-width: 500px; max-height: 500px;
-            background-color: var(--board-color); border: 6px solid #8e44ad; border-radius: 12px;
-            padding: 4%; box-sizing: border-box; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        }
+        .board-wrap { position: relative; width: 94vw; height: 94vw; max-width: 500px; max-height: 500px;
+            background: var(--board); border: 6px solid #8e44ad; border-radius: 12px; padding: 4%;
+            box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
         .board-inner { position: relative; width: 100%; height: 100%; }
-        .grid-line { position: absolute; background-color: var(--line-color); opacity: 0.5; }
-        
-        /* 點擊熱區 */
-        .intersection { 
-            position: absolute; width: 12%; height: 12%; transform: translate(-50%, -50%); 
-            z-index: 150; cursor: pointer; 
-        }
-
-        .stone {
-            position: absolute; width: 9.5%; height: 9.5%; border-radius: 50%;
-            transform: translate(-50%, -50%); z-index: 50;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 4.5vw; pointer-events: none;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .grid-line { position: absolute; background: var(--line); opacity: 0.5; }
+        .hit { position: absolute; width: 12%; height: 12%; transform: translate(-50%,-50%);
+            z-index: 150; cursor: pointer; }
+        .stone { position: absolute; width: 9.5%; height: 9.5%; border-radius: 50%;
+            transform: translate(-50%,-50%); z-index: 50; display: flex; justify-content: center;
+            align-items: center; font-size: 4.5vw; pointer-events: none; }
         @media (min-width: 500px) { .stone { font-size: 22px; } }
-        .stone.b { background: #111; color: #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.6); }
-        .stone.w { background: #f0f0f0; color: #000; box-shadow: 2px 2px 5px rgba(0,0,0,0.4); }
-        
-        /* 氣數顯示 */
-        .aura {
-            position: absolute; width: 12%; height: 12%; border-radius: 50%;
-            transform: translate(-50%, -50%); z-index: 30; pointer-events: none;
-        }
-        .aura.b { background: rgba(155, 89, 182, 0.5); box-shadow: 0 0 8px rgba(155, 89, 182, 0.5); }
-        .aura.w { background: rgba(46, 204, 113, 0.5); box-shadow: 0 0 8px rgba(46, 204, 113, 0.5); }
+        .stone.b { background: #111; color: #fff; box-shadow: 2px 2px 6px rgba(0,0,0,0.6); }
+        .stone.w { background: #f0f0f0; color: #000; box-shadow: 2px 2px 6px rgba(0,0,0,0.4); }
+        .aura { position: absolute; width: 12%; height: 12%; border-radius: 50%;
+            transform: translate(-50%,-50%); z-index: 30; pointer-events: none; }
+        .aura.b { background: var(--b-aura); box-shadow: 0 0 8px var(--b-aura); }
+        .aura.w { background: var(--w-aura); box-shadow: 0 0 8px var(--w-aura); }
         .danger { animation: blink 0.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        .modal {
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;
-        }
-        .modal-box {
-            background: #2c3e50; padding: 20px; border-radius: 15px;
-            width: 85%; max-width: 350px; text-align: center; color: white;
-        }
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+        
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: #2c3e50; padding: 20px; border-radius: 15px; width: 90%; max-width: 380px;
+            text-align: center; color: white; box-shadow: 0 15px 35px rgba(0,0,0,0.7); transform: scale(0.9);
+            transition: transform 0.3s; }
+        .modal.show .modal-box { transform: scale(1); }
+        .boss-art { font-size: 48px; margin: 10px 0; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .hp-bar { width: 100%; height: 12px; background: #444; border-radius: 6px; margin: 10px 0; overflow: hidden; }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #e74c3c, #f39c12); width: 0%; transition: width 0.5s; }
+        .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 15px 0; }
+        .lvl-btn { padding: 10px; border-radius: 10px; background: #34495e; border: 2px solid #555; cursor: pointer; }
+        .lvl-btn.unlocked { background: #2c3e50; border-color: #f39c12; }
+        .lvl-btn.current { background: #e67e22; color: #000; }
+        .lvl-btn.locked { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <div id="status">😊 輪到黑棋 (你)</div>
+    <div id="status">🎮 選擇關卡開始挑戰</div>
     <div class="controls">
-        <button id="btnAI" onclick="toggleAI()">🤖 AI: 關</button>
+        <button onclick="showLevelSelect()">📜 關卡選擇</button>
         <button onclick="passMove()">🏳️ 虛手</button>
         <button onclick="showScore()">📊 計分</button>
         <button class="sec" onclick="undoMove()">↩️ 悔棋</button>
@@ -102,14 +73,38 @@
         <div class="board-inner" id="board"></div>
     </div>
 
-    <!-- 計分 Modal -->
-    <div class="modal" id="scoreModal" onclick="if(event.target===this) this.style.display='none'">
+    <!-- 關卡選擇 -->
+    <div class="modal" id="levelModal">
         <div class="modal-box">
-            <h3>🏆 對局結果</h3>
+            <h3>📜 挑戰關卡</h3>
+            <div class="level-grid" id="lvlGrid"></div>
+            <button class="sec" onclick="closeModal('levelModal')">返回</button>
+        </div>
+    </div>
+
+    <!-- BOSS 開場 -->
+    <div class="modal" id="bossModal">
+        <div class="modal-box">
+            <div class="boss-art" id="bossArt">🐉</div>
+            <h2 id="bossName">BOSS 名稱</h2>
+            <p id="bossDesc">描述...</p>
+            <div class="hp-bar"><div class="hp-fill" id="bossHp"></div></div>
+            <p style="color:#aaa; font-size:14px">AI 強度: <span id="bossDiff">0</span>%</p>
+            <button class="act" onclick="startBossBattle()">⚔️ 接受挑戰</button>
+        </div>
+    </div>
+
+    <!-- 計分/勝負 -->
+    <div class="modal" id="scoreModal">
+        <div class="modal-box">
+            <h3 id="resultTitle">🏆 對局結果</h3>
             <p>⚫ 黑棋: <span id="sB">0</span></p>
-            <p>⚪ 白棋: <span id="sW">0</span> (含 6.5 目)</p>
-            <h2 id="winnerText" style="color: #e67e22;"></h2>
-            <button onclick="document.getElementById('scoreModal').style.display='none'">關閉</button>
+            <p>⚪ 白棋: <span id="sW">0</span> (含6.5目)</p>
+            <h2 id="winnerText" style="color:#e67e22; margin:10px 0;"></h2>
+            <div id="nextBtnWrap" style="display:none; margin-top:10px;">
+                <button class="act" onclick="nextLevel()">🔓 挑戰下一關</button>
+            </div>
+            <button class="sec" onclick="closeModal('scoreModal')" style="margin-top:8px">關閉</button>
         </div>
     </div>
 
@@ -119,236 +114,231 @@
         const statusEl = document.getElementById('status');
         const wrapEl = document.getElementById('wrap');
         
-        let grid = Array(SZ).fill().map(() => Array(SZ).fill(null));
-        let turn = 'black'; // black=human, white=AI
+        // 遊戲狀態
+        let grid = Array(SZ).fill().map(()=>Array(SZ).fill(null));
+        let turn = 'black'; // black=玩家, white=AI/BOSS
         let history = [];
-        let ko = null; // 劫爭點 {r, c}
-        let aiOn = false;
-        let isAiThinking = false; // 🔒 防止 AI 思考期間點擊
+        let ko = null;
+        let isAiThinking = false;
+        let gameActive = false;
 
+        // 關卡與 BOSS 設定
+        const LEVELS = [
+            { id:1, name:"貪吃小龍", diff:0.3, desc:"喜歡吃子，不懂大局", art:"🦎" },
+            { id:2, name:"鐵壁龜仙", diff:0.6, desc:"防守堅固，擅長做眼", art:"🐢" },
+            { id:3, name:"影舞狐仙", diff:0.85, desc:"擅長切斷與反擊，注意陷阱", art:"🦊" },
+            { id:4, name:"狂風劍客", diff:1.0, desc:"攻守兼備，計算精準", art:"⚔️" },
+            { id:5, name:"👑 圍棋之神", diff:1.5, desc:"不留活路，極致算路", art:"🐲" }
+        ];
+        let currentLvl = parseInt(localStorage.getItem('goLvl')) || 1;
+        let unlockedLvl = parseInt(localStorage.getItem('goUnlocked')) || 1;
+        let activeBoss = null;
+
+        // ================= 初始化 =================
         function init() {
             boardEl.innerHTML = '';
-            for(let i=0; i<SZ; i++) {
-                const p = (i/(SZ-1))*100;
-                mkLine(0, p, 100, 2); mkLine(p, 0, 2, 100);
-            }
+            for(let i=0; i<SZ; i++) { const p=(i/(SZ-1))*100; mkLine(0,p,100,2); mkLine(p,0,2,100); }
             for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
-                const d = document.createElement('div');
-                d.className = 'intersection';
-                d.style.left = (c/(SZ-1)*100)+'%';
-                d.style.top = (r/(SZ-1)*100)+'%';
-                d.onclick = () => click(r, c);
-                boardEl.appendChild(d);
+                const d=document.createElement('div'); d.className='hit';
+                d.style.left=(c/(SZ-1)*100)+'%'; d.style.top=(r/(SZ-1)*100)+'%';
+                d.onclick=()=>click(r,c); boardEl.appendChild(d);
             }
             draw();
+            showLevelSelect();
         }
-
         function mkLine(x,y,w,h) {
-            const l = document.createElement('div'); l.className='grid-line';
+            const l=document.createElement('div'); l.className='grid-line';
             l.style.left=x+'%'; l.style.top=y+'%'; l.style.width=w+'%'; l.style.height=h+'%';
             boardEl.appendChild(l);
         }
 
-        // ================= 圍棋核心邏輯 =================
-
-        function getGroup(r, c, col, st) {
-            const g=[], v=new Set(), q=[[r,c]];
-            v.add(`${r},${c}`);
+        // ================= 圍棋核心 =================
+        function getGroup(r,c,col,st) {
+            const g=[],v=new Set(),q=[[r,c]]; v.add(`${r},${c}`);
             while(q.length) {
                 const [cr,cc]=q.shift(); g.push([cr,cc]);
                 for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-                    const nr=cr+dr, nc=cc+dc, k=`${nr},${nc}`;
-                    if(nr>=0 && nr<SZ && nc>=0 && nc<SZ && !v.has(k) && st[nr][nc]===col) {
-                        v.add(k); q.push([nr,nc]);
-                    }
+                    const nr=cr+dr,nc=cc+dc,k=`${nr},${nc}`;
+                    if(nr>=0&&nr<SZ&&nc>=0&&nc<SZ&&!v.has(k)&&st[nr][nc]===col) { v.add(k); q.push([nr,nc]); }
                 }
             }
             return g;
         }
-
-        function getLibs(g, st) {
+        function getLibs(g,st) {
             const s=new Set();
-            for(const [r,c] of g) {
-                for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-                    const nr=r+dr, nc=c+dc;
-                    if(nr>=0 && nr<SZ && nc>=0 && nc<SZ && st[nr][nc]===null) s.add(`${nr},${nc}`);
-                }
+            for(const [r,c] of g) for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                const nr=r+dr,nc=c+dc;
+                if(nr>=0&&nr<SZ&&nc>=0&&nc<SZ&&st[nr][nc]===null) s.add(`${nr},${nc}`);
             }
             return s.size;
         }
-
-        function isIllegal(r, c, col) {
+        function isIllegal(r,c,col) {
             if(grid[r][c]!==null) return true;
-            if(ko && ko.r===r && ko.c===c) return true; // 劫爭檢查
-            
-            // 模擬落子
-            const sim = grid.map(r=>[...r]);
-            sim[r][c] = col;
-            const ene = col==='black'?'white':'black';
+            if(ko&&ko.r===r&&ko.c===c) return true;
+            const sim=grid.map(r=>[...r]); sim[r][c]=col; const ene=col==='black'?'white':'black';
             let cap=[];
-            
-            // 檢查提子
             for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-                const nr=r+dr, nc=c+dc;
-                if(nr>=0 && nr<SZ && nc>=0 && nc<SZ && sim[nr][nc]===ene) {
-                    const grp=getGroup(nr,nc,ene,sim);
-                    if(getLibs(grp,sim)===0) cap.push(...grp);
+                const nr=r+dr,nc=c+dc;
+                if(nr>=0&&nr<SZ&&nc>=0&&nc<SZ&&sim[nr][nc]===ene) {
+                    const g=getGroup(nr,nc,ene,sim);
+                    if(getLibs(g,sim)===0) cap.push(...g);
                 }
             }
-            
-            // 模擬提子移除
             cap.forEach(([cr,cc])=>sim[cr][cc]=null);
-            
-            // 檢查自殺
-            const myG=getGroup(r,c,col,sim);
-            return getLibs(myG,sim)===0; // 氣數為 0 且未提子 = 禁手
+            return getLibs(getGroup(r,c,col,sim),sim)===0;
         }
-
         function applyCaptures(col) {
-            const ene=col==='black'?'white':'black', v=new Set(), out=[];
-            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
-                if(grid[r][c]===ene && !v.has(`${r},${c}`)) {
-                    const g=getGroup(r,c,ene,grid);
-                    g.forEach(([gr,gc])=>v.add(`${gr},${gc}`));
+            const ene=col==='black'?'white':'black',v=new Set(),out=[];
+            for(let r=0;r<SZ;r++) for(let c=0;c<SZ;c++) {
+                if(grid[r][c]===ene&&!v.has(`${r},${c}`)) {
+                    const g=getGroup(r,c,ene,grid); g.forEach(([gr,gc])=>v.add(`${gr},${gc}`));
                     if(getLibs(g,grid)===0) out.push(...g);
                 }
             }
-            out.forEach(([r,c])=>grid[r][c]=null);
-            return out;
+            out.forEach(([r,c])=>grid[r][c]=null); return out;
         }
+        function updateKo(r,c,cap) { if(cap.length===1) ko={r:cap[0][0],c:cap[0][1]}; else ko=null; }
 
-        function updateKo(r, c, cap) {
-            if(cap.length===1) ko={r:cap[0][0], c:cap[0][1]};
-            else ko=null;
+        // ================= BOSS AI 引擎 =================
+        function aiScoreMove(r,c,col,lvl) {
+            if(isIllegal(r,c,col)) return -9999;
+            const sim=grid.map(r=>[...r]); sim[r][c]=col; const ene=col==='black'?'white':'black';
+            
+            // 1. 提子獎勵 (BOSS 更重視)
+            let capBonus=0;
+            for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                const nr=r+dr,nc=c+dc;
+                if(nr>=0&&nr<SZ&&nc>=0&&nc<SZ&&sim[nr][nc]===ene) {
+                    if(getLibs(getGroup(nr,nc,ene,sim),sim)===0) capBonus+=500;
+                }
+            }
+
+            // 2. 氣數與眼位 (防守型BOSS權重高)
+            const myG=getGroup(r,c,col,sim);
+            const libs=getLibs(myG,sim);
+            let libScore = libs<=1 ? -600 : (libs===2 ? 50 : 20);
+            let eyeBonus = (libs>=3 && r>1 && r<SZ-2 && c>1 && c<SZ-2) ? 100 : 0;
+
+            // 3. 連線與形狀 (中後期BOSS重視)
+            let connBonus=0;
+            for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                if(sim[r+dr][c+dc]===col) connBonus+=40;
+                if(sim[r+dr][c+dc]===ene) connBonus-=15; // 避免貼敵
+            }
+
+            // 4. 戰略偏好 (依關卡調整)
+            let stratBonus=0;
+            if(lvl.diff<0.5) stratBonus = Math.random()*100; // 低難度隨機性高
+            else {
+                const dist=Math.abs(r-4)+Math.abs(c-4);
+                stratBonus += (8-dist)*20; // 偏好星位/中央
+                if(r===1||r===SZ-2||c===1||c===SZ-2) stratBonus+=30; // 避免過早1線
+            }
+
+            return (capBonus * lvl.diff) + (libScore * 1.2) + eyeBonus + (connBonus * lvl.diff) + stratBonus;
         }
-
-        // ================= AI 邏輯 (防卡死版) =================
 
         function aiMove() {
-            // 如果不是 AI 回合或已經在思考，直接返回
-            if(!aiOn || turn!=='white' || isAiThinking) return;
-            
-            isAiThinking = true; // 🔒 鎖定
-            statusEl.innerText = "🤖 AI 正在思考...";
+            if(!gameActive || turn!=='white' || isAiThinking) return;
+            isAiThinking=true;
+            statusEl.innerText=`${activeBoss.art} ${activeBoss.name} 思考中...`;
+            wrapEl.style.cursor='wait';
 
-            // 使用 setTimeout 讓出執行緒，確保 UI 更新「思考中」
-            setTimeout(() => {
-                try {
-                    let bestMove = null;
-                    let maxScore = -Infinity;
-
-                    // 掃描全盤尋找最佳步
-                    for(let r=0; r<SZ; r++) {
-                        for(let c=0; c<SZ; c++) {
-                            if(!isIllegal(r, c, 'white')) {
-                                // 評分邏輯：提子 > 避死 > 佔地
-                                let score = Math.random() * 5; 
-                                const dist = Math.abs(r-4)+Math.abs(c-4);
-                                score += (8-dist); // 偏好中央
-                                
-                                // 檢查能不能提子
-                                const sim=grid.map(row=>[...row]); sim[r][c]='white';
-                                // ... (簡化評分)
-                                score += 100; 
-
-                                if(score > maxScore) { maxScore = score; bestMove = {r, c}; }
-                            }
-                        }
-                    }
-
-                    if(bestMove) {
-                        place(bestMove.r, bestMove.c, true);
-                    } else {
-                        // 無合法步 -> 虛手
-                        passMove(); 
-                    }
-                } catch(e) {
-                    console.error("AI 錯誤:", e);
-                    statusEl.innerText = "😵 AI 當機了，請重置";
-                } finally {
-                    isAiThinking = false; // 🔓 無論成敗都解鎖
+            setTimeout(()=>{
+                let best=-9999, move=null;
+                for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
+                    const s=aiScoreMove(r,c,'white',activeBoss);
+                    if(s>best) { best=s; move={r,c}; }
                 }
-            }, 50); 
+                
+                wrapEl.style.cursor='pointer';
+                if(move) place(move.r, move.c, true);
+                else { passMove(); isAiThinking=false; }
+            }, 300);
         }
 
-        // ================= 交互邏輯 =================
-
+        // ================= 交互與流程 =================
         function click(r,c) {
-            if(isAiThinking || (aiOn && turn!=='black')) return;
+            if(isAiThinking || !gameActive || turn!=='black') return;
             place(r,c,false);
         }
-
-        function place(r,c, isAI) {
-            if(isIllegal(r,c,turn)) return;
-            
-            if(!isAI) history.push({g:grid.map(r=>[...r]), t:turn, k:ko});
-
-            grid[r][c]=turn;
-            const cap=applyCaptures(turn);
-            updateKo(r,c,cap);
-
-            // 切換回合
-            turn = turn==='black'?'white':'black';
-            draw();
-            updStatus();
-
-            // 觸發 AI (如果不是 AI 下的子 且 輪到 AI)
-            if(!isAI && aiOn && turn==='white') {
-                aiMove();
+        function place(r,c,isAI) {
+            if(isIllegal(r,c,turn)) {
+                if(!isAI) { wrapEl.classList.add('shake'); setTimeout(()=>wrapEl.classList.remove('shake'),400); }
+                return;
             }
-        }
+            if(!isAI) history.push({g:grid.map(r=>[...r]),t:turn,k:ko});
+            grid[r][c]=turn;
+            const cap=applyCaptures(turn); updateKo(r,c,cap);
+            turn=turn==='black'?'white':'black';
+            draw(); updStatus();
 
+            if(!isAI && gameActive && turn==='white') aiMove();
+            else isAiThinking=false;
+        }
         function passMove() {
-            if(isAiThinking) return;
-            history.push({g:grid.map(r=>[...r]), t:turn, k:ko});
-            statusEl.innerText = `${turn==='black'?'⚫':'⚪'} 虛手`;
-            turn = turn==='black'?'white':'black';
-            draw(); updStatus();
-            if(aiOn && turn==='white') aiMove();
+            if(isAiThinking||!gameActive) return;
+            history.push({g:grid.map(r=>[...r]),t:turn,k:ko});
+            statusEl.innerText=`🏳️ ${turn==='black'?'你':'BOSS'} 虛手`;
+            turn=turn==='black'?'white':'black'; draw(); updStatus();
+            if(gameActive && turn==='white') aiMove(); else isAiThinking=false;
         }
-
         function undoMove() {
-            if(history.length===0 || isAiThinking) return;
-            // 如果開 AI，一次悔兩步 (回到你的回合)
-            if(aiOn && history.length>=2) { history.pop(); } // 撤回 AI
-            const prev=history.pop(); // 撤回玩家
-            grid=prev.g; turn=prev.t; ko=prev.k;
+            if(history.length===0||isAiThinking||!gameActive) return;
+            const prev=history.pop(); grid=prev.g; turn=prev.t; ko=prev.k;
             draw(); updStatus();
         }
-
         function resetGame() {
-            grid=Array(SZ).fill().map(()=>Array(SZ).fill(null));
-            turn='black'; history=[]; ko=null; isAiThinking=false;
-            draw(); updStatus();
+            grid=Array(SZ).fill().map(()=>Array(SZ).fill(null)); turn='black';
+            history=[]; ko=null; isAiThinking=false; gameActive=false;
+            draw(); statusEl.innerText="🎮 選擇關卡開始挑戰";
         }
 
-        function toggleAI() {
-            aiOn=!aiOn;
-            document.getElementById('btnAI').innerText = aiOn ? '🤖 AI: 開' : '🤖 AI: 關';
-            document.getElementById('btnAI').className = aiOn ? 'act' : '';
+        // ================= 關卡 UI =================
+        function showLevelSelect() {
+            const g=document.getElementById('lvlGrid'); g.innerHTML='';
+            LEVELS.forEach(l=>{
+                const b=document.createElement('div'); b.className='lvl-btn';
+                b.innerHTML=`<div style="font-size:20px">${l.art}</div>${l.id}`;
+                if(l.id<=unlockedLvl) {
+                    b.classList.add('unlocked');
+                    if(l.id===currentLvl) b.classList.add('current');
+                    b.onclick=()=>selectLevel(l);
+                } else { b.classList.add('locked'); }
+                g.appendChild(b);
+            });
+            document.getElementById('levelModal').style.display='flex';
+        }
+        function selectLevel(lvl) {
+            closeModal('levelModal');
+            activeBoss=lvl;
+            document.getElementById('bossArt').innerText=lvl.art;
+            document.getElementById('bossName').innerText=lvl.name;
+            document.getElementById('bossDesc').innerText=lvl.desc;
+            document.getElementById('bossDiff').innerText=Math.round(lvl.diff*100);
+            document.getElementById('bossHp').style.width='100%';
+            document.getElementById('bossModal').classList.add('show');
+            document.getElementById('bossModal').style.display='flex';
+        }
+        function startBossBattle() {
+            closeModal('bossModal');
+            resetGame(); currentLvl=activeBoss.id; gameActive=true;
+            statusEl.innerText=`⚔️ 挑戰 ${activeBoss.name} 開始！`;
             updStatus();
-            if(aiOn && turn==='white') aiMove();
         }
 
-        function updStatus() {
-            if(!aiOn) statusEl.innerText=turn==='black'?'😊 輪到黑棋':'😎 輪到白棋';
-            else statusEl.innerText=turn==='black'?'😊 輪到你 (黑)':'🤖 輪到 AI (白)';
-        }
-
-        // ================= 計分系統 =================
+        // ================= 計分與進度 =================
         function calcScore() {
-            let bS=0, wS=0;
-            const vis=new Set();
-            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
+            let bS=0,wS=0; const vis=new Set();
+            for(let r=0;r<SZ;r++) for(let c=0;c<SZ;c++) {
                 if(grid[r][c]==='black') bS++;
                 else if(grid[r][c]==='white') wS++;
                 else if(!vis.has(`${r},${c}`)) {
-                    const area=[], q=[[r,c]]; vis.add(`${r},${c}`);
-                    let tb=false, tw=false;
+                    const area=[],q=[[r,c]]; vis.add(`${r},${c}`); let tb=false,tw=false;
                     while(q.length) {
                         const [cr,cc]=q.shift(); area.push([cr,cc]);
                         for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-                            const nr=cr+dr, nc=cc+dc;
+                            const nr=cr+dr,nc=cc+dc;
                             if(nr>=0&&nr<SZ&&nc>=0&&nc<SZ) {
                                 if(grid[nr][nc]==='black') tb=true;
                                 else if(grid[nr][nc]==='white') tw=true;
@@ -356,51 +346,55 @@
                             }
                         }
                     }
-                    if(tb && !tw) bS+=area.length;
-                    else if(tw && !tb) wS+=area.length;
+                    if(tb&&!tw) bS+=area.length; else if(tw&&!tb) wS+=area.length;
                 }
             }
-            return {b: bS, w: wS+6.5};
+            return {b:bS, w:wS+6.5};
         }
-
         function showScore() {
+            if(!gameActive) return statusEl.innerText="⚠️ 請先選擇關卡開始";
             const s=calcScore();
             document.getElementById('sB').innerText=s.b;
             document.getElementById('sW').innerText=s.w.toFixed(1);
-            document.getElementById('winnerText').innerText = s.b > s.w ? '⚫ 黑棋勝！' : '⚪ 白棋勝！';
+            const win = s.b > s.w;
+            document.getElementById('winnerText').innerText = win ? '🎉 玩家勝利！' : '💀 BOSS 獲勝！';
+            document.getElementById('nextBtnWrap').style.display = win ? 'block' : 'none';
+            document.getElementById('scoreModal').classList.add('show');
             document.getElementById('scoreModal').style.display='flex';
         }
-
-        // ================= 繪圖 =================
-        function draw() {
-            // 移除舊棋子
-            document.querySelectorAll('.stone, .aura').forEach(e=>e.remove());
-            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
-                if(grid[r][c]) {
-                    const d=document.createElement('div');
-                    d.className=`stone ${grid[r][c]==='black'?'b':'w'}`;
-                    d.style.left=(c/(SZ-1)*100)+'%'; d.style.top=(r/(SZ-1)*100)+'%';
-                    d.innerHTML = grid[r][c]==='black'?'👹':'👻';
-                    boardEl.appendChild(d);
-                }
+        function nextLevel() {
+            closeModal('scoreModal');
+            if(currentLvl >= unlockedLvl && currentLvl < LEVELS.length) {
+                unlockedLvl++;
+                localStorage.setItem('goUnlocked', unlockedLvl);
             }
-            // 顯示 1 氣警告
-            for(let r=0; r<SZ; r++) for(let c=0; c<SZ; c++) {
-                if(grid[r][c]) {
-                    const g=getGroup(r,c,grid[r][c],grid);
-                    if(getLibs(g,grid)===1) {
-                        const a=document.createElement('div');
-                        a.className=`aura ${grid[r][c]==='black'?'b':'w'} danger`;
-                        a.style.left=(c/(SZ-1)*100)+'%'; a.style.top=(r/(SZ-1)*100)+'%';
-                        boardEl.appendChild(a);
-                    }
+            const next = LEVELS[currentLvl]; // 下一關索引
+            if(next) selectLevel(next);
+            else statusEl.innerText = "🏆 恭喜通關所有關卡！可重新挑戰或自由對弈。";
+        }
+
+        // ================= 輔助 =================
+        function updStatus() { statusEl.innerText = turn==='black' ? '😊 輪到你落子' : `${activeBoss.art} 輪到 ${activeBoss.name}`; }
+        function closeModal(id) { document.getElementById(id).style.display='none'; document.getElementById(id).classList.remove('show'); }
+        function draw() {
+            document.querySelectorAll('.stone,.aura').forEach(e=>e.remove());
+            for(let r=0;r<SZ;r++) for(let c=0;c<SZ;c++) if(grid[r][c]) {
+                const d=document.createElement('div'); d.className=`stone ${grid[r][c]==='black'?'b':'w'}`;
+                d.style.left=(c/(SZ-1)*100)+'%'; d.style.top=(r/(SZ-1)*100)+'%';
+                d.innerHTML=grid[r][c]==='black'?'👹':'👻'; boardEl.appendChild(d);
+            }
+            for(let r=0;r<SZ;r++) for(let c=0;c<SZ;c++) if(grid[r][c]) {
+                const g=getGroup(r,c,grid[r][c],grid);
+                if(getLibs(g,grid)===1) {
+                    const a=document.createElement('div');
+                    a.className=`aura ${grid[r][c]==='black'?'b':'w'} danger`;
+                    a.style.left=(c/(SZ-1)*100)+'%'; a.style.top=(r/(SZ-1)*100)+'%';
+                    boardEl.appendChild(a);
                 }
             }
         }
-
-        window.onclick=e=>{ if(e.target.id==='scoreModal') e.target.style.display='none'; };
+        window.onclick=e=>{ if(e.target.classList.contains('modal')) closeModal(e.target.id); };
         init();
     </script>
 </body>
 </html>
-
