@@ -219,11 +219,15 @@
             let libScore = libs<=1 ? -600 : (libs===2 ? 50 : 20);
             let eyeBonus = (libs>=3 && r>1 && r<SZ-2 && c>1 && c<SZ-2) ? 100 : 0;
 
-            // 3. 連線與形狀 (中後期BOSS重視)
-            let connBonus=0;
-            for(const [dr,dc] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-                if(sim[r+dr][c+dc]===col) connBonus+=40;
-                if(sim[r+dr][c+dc]===ene) connBonus-=15; // 避免貼敵
+            // 3. 連線與形狀
+            let connBonus = 0;
+            for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+                const nr = r + dr, nc = c + dc;
+                // 必須先判斷座標是否在棋盤內
+                if (nr >= 0 && nr < SZ && nc >= 0 && nc < SZ) {
+                    if (sim[nr][nc] === col) connBonus += 40;
+                    if (sim[nr][nc] === ene) connBonus -= 15;
+                }
             }
 
             // 4. 戰略偏好 (依關卡調整)
